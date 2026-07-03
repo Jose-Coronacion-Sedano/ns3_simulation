@@ -1,0 +1,21 @@
+# Archivos compilados
+build/
+cmake-cache/
+*.o
+*.so
+*.a
+*.gch
+
+# Resultados y temporales
+*.log
+*.tmp
+*.pcap
+*.tr
+
+# Python
+__pycache__/
+*.pyc
+
+# Editores
+.vscode/
+

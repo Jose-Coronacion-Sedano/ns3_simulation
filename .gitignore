@@ -1,0 +1,55 @@
+# -------------------------------------------------
+# ns-3 completo
+# -------------------------------------------------
+ns3/ns-allinone-3.46.1/
+ns3/ns-allinone-3.46.1.tar.bz2
+ns3/results/
+ns3/scenarios/results/
+
+# -------------------------------------------------
+# Resultados de simulación
+# -------------------------------------------------
+results/
+*.pcap
+*.db
+*.xml
+*.log
+
+# Archivos generados por ns-3 / NR / LTE
+Nr*.txt
+Dl*.txt
+Ul*.txt
+Rx*.txt
+Tx*.txt
+*Sinr*.txt
+*Pathloss*.txt
+*Stats*.txt
+*Trace*.txt
+
+# -------------------------------------------------
+# Python
+# -------------------------------------------------
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# -------------------------------------------------
+# Modelos y datasets pesados
+# -------------------------------------------------
+data/raw/
+data/interim/
+data/generated/
+ml/checkpoints/
+
+# Sí se pueden versionar modelos finales pequeños
+!ml/models/final/
+!data/datasets/final/
+
+# -------------------------------------------------
+# Sistema
+# -------------------------------------------------
+.DS_Store
+Thumbs.db
