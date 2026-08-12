@@ -1,0 +1,158 @@
+schema_version: 1
+
+campaign:
+  id: C01_initial_comparison
+  name: Comparacion inicial de tecnologias para telemando
+  phase: 1
+  status: specification_draft
+  executable: false
+  objective: >-
+    Comparar tres tecnologias bajo la misma demanda de telemando y el mismo
+    escenario subterraneo antes de seleccionar una para las fases de optimizacion.
+  scope:
+    include_neural_network: false
+    include_esp32: false
+    include_vlc: false
+  execution_blockers:
+    - Calibrar los perfiles de severidad electromagnetica con literatura o mediciones.
+    - Completar y validar los perfiles PHY de cada tecnologia.
+    - Implementar el escenario y el recolector de metricas en ns-3.
+
+design:
+  type: full_factorial_pilot
+  controlled_service: telecommand_point_to_point
+  technologies:
+    - id: wifi_reference
+      model: ieee_802_11ax_target
+      implementation_status: pending
+    - id: lr_wpan_reference
+      model: ieee_802_15_4_point_to_point
+      label: ZigBee-like
+      implementation_status: pending
+    - id: lora_p2p_reference
+      model: lora_point_to_point
+      implementation_status: pending
+  geometries:
+    - id: G01_straight
+      type: straight_tunnel
+      coordinate_system: local_meters
+      length_m: 100.0
+      width_m: 4.0
+      height_m: 4.0
+      transmitter:
+        x_m: 5.0
+        y_m: 0.0
+        z_m: 2.0
+      receiver:
+        initial_x_m: 10.0
+        y_m: 0.0
+        z_m: 2.0
+        speed_mps: 2.22
+  severity_levels:
+    - ideal
+    - normal
+    - degraded
+    - critical
+  seeds:
+    - 1
+    - 2
+    - 3
+  expected_runs: 36
+  simulation_duration_s: 30.0
+
+traffic:
+  transport: UDP
+  control:
+    packet_size_bytes: 12
+    period_ms: 10
+    priority: high
+    sequence_number: true
+    timestamp: true
+    application_ack: true
+  control_ack:
+    packet_size_bytes: 4
+    trigger: each_valid_control_packet
+    priority: high
+  heartbeat:
+    packet_size_bytes: 4
+    period_ms: 50
+    priority: high
+  telemetry:
+    packet_size_bytes: 32
+    period_ms: 200
+    priority: low
+
+safety:
+  state_on_timeout: SAFE_STOP
+  max_time_without_valid_control_ms: 200
+  critical_consecutive_losses: 20
+
+electromagnetic_interference:
+  representation: ordinal_uncalibrated
+  calibration_required: true
+  model_50_60_hz_as_direct_rf_interference: false
+  interpretation: >-
+    Los armonicos, variadores, motores y ruido impulsivo se traduciran a ruido
+    efectivo y rafagas interferentes solo cuando existan parametros justificados.
+  levels:
+    ideal:
+      ordinal: 0
+      effective_noise_delta_db: null
+      burst_probability: null
+      burst_duration_ms: null
+    normal:
+      ordinal: 1
+      effective_noise_delta_db: null
+      burst_probability: null
+      burst_duration_ms: null
+    degraded:
+      ordinal: 2
+      effective_noise_delta_db: null
+      burst_probability: null
+      burst_duration_ms: null
+    critical:
+      ordinal: 3
+      effective_noise_delta_db: null
+      burst_probability: null
+      burst_duration_ms: null
+
+metrics:
+  primary:
+    - functional_availability
+    - safe_stop_count
+    - unsafe_time_ms
+    - max_outage_ms
+    - link_recovery_time_ms
+    - control_pdr
+    - control_plr
+    - control_latency_p95_ms
+    - control_latency_p99_ms
+    - control_jitter_p95_ms
+    - max_consecutive_losses
+  explanatory_when_available:
+    - rx_power_dbm
+    - snr_db
+    - sinr_db
+  engineering_targets:
+    control_pdr_min: 0.99
+    functional_availability_min: 0.995
+    control_latency_p95_max_ms: 50
+    control_latency_p99_max_ms: 100
+    control_jitter_p95_max_ms: 20
+
+selection:
+  composite_index_enabled: false
+  lexicographic_order:
+    - maximize_functional_availability
+    - minimize_safe_stop_count
+    - minimize_max_outage_ms
+    - maximize_control_pdr
+    - minimize_control_latency_p99_ms
+
+reproducibility:
+  record_git_commit: true
+  record_ns3_version: true
+  record_complete_parameters: true
+  record_seed_and_run: true
+  record_event_timestamps: true
+  raw_results_in_git: false
