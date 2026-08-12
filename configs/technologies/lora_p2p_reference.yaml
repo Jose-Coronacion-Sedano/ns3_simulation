@@ -1,0 +1,91 @@
+schema_version: 1
+
+technology:
+  id: lora_p2p_reference
+  display_name: LoRa point-to-point reference
+  family: LoRa_CSS
+  implementation_status: adapter_required
+  profile_purpose: fastest_robust_lora_baseline
+  not_lorawan: true
+
+ns3:
+  version: 3.46.1
+  bundled_module: lorawan
+  bundled_module_version: 0.3.5
+  bundled_module_scope: LoRaWAN_Class_A
+  compatibility_limitation: >-
+    LoraNetDevice is a LoRaWAN device and its own source notes that IP is not
+    used in the standard. A direct point-to-point MAC adapter must be written
+    before this profile can execute the common application service.
+  required_adapter: custom_direct_lora_mac
+
+comparison:
+  traffic_profile_ref: configs/traffic/telecommand_safety.yaml
+  conducted_tx_power_dbm: 14.0
+  tx_antenna_gain_dbi: 0.0
+  rx_antenna_gain_dbi: 0.0
+  nominal_eirp_dbm: 14.0
+  power_mode: common_controlled_eirp
+
+phy:
+  center_frequency_mhz: 915.2
+  regional_reference: AU915-928
+  bandwidth_hz: 125000
+  spreading_factor: 7
+  coding_rate: 4/5
+  explicit_header: true
+  payload_crc: true
+  preamble_symbols: 8
+  low_data_rate_optimization: false
+  nominal_raw_bitrate_bps: 5468.75
+  reference_rx_sensitivity_dbm: -123.0
+  control_payload_time_on_air_ms: 41.216
+  time_on_air_payload_bytes: 12
+
+mac:
+  topology: direct_half_duplex_pair
+  lorawan_enabled: false
+  channel_access: single_link_scheduled
+  native_mac_ack: false
+  application_ack_is_monitoring_only: true
+  application_retransmissions: false
+  application_mapping: custom_direct_lora_mac
+
+preflight:
+  maximum_application_payload_bps: 14720
+  raw_rate_utilization_lower_bound: 2.692
+  control_period_ms: 10
+  control_payload_time_on_air_ms: 41.216
+  raw_capacity_check: fail
+  deadline_check_before_headers: fail
+  interpretation: >-
+    The offered application payload exceeds the nominal raw bitrate before
+    adding headers or retries. A 12-byte control payload also occupies the
+    channel for more than four control periods. Simulation must report this
+    overload rather than silently throttle the source.
+
+regulatory_context:
+  country: PE
+  unlicensed_band_mhz:
+    - 915.0
+    - 928.0
+  cited_max_eirp_dbm: 30.0
+  simulated_eirp_dbm: 14.0
+  channel_plan_is_reference_only: true
+  hardware_deployment_requires_homologation_review: true
+
+sources:
+  - id: ns3_allinone_3_46
+    url: https://www.nsnam.org/releases/ns-3-46/
+  - id: ns3_lorawan_app
+    url: https://apps.nsnam.org/app/lorawan/
+  - id: lorawan_netdevice_source
+    url: https://github.com/signetlabdei/lorawan/blob/v0.3.5/model/lora-net-device.h
+  - id: semtech_lora_overview
+    url: https://www.semtech.com/uploads/technology/LoRa/lora-and-lorawan.pdf
+  - id: semtech_sx1276
+    url: https://www.semtech.com/products/wireless-rf/lora-connect/sx1276
+  - id: lora_alliance_rp002
+    url: https://resources.lora-alliance.org/home/rp002-1-0-4-regional-parameters
+  - id: mtc_ds_006_2013
+    url: https://cdn.www.gob.pe/uploads/document/file/5412657/343700-decreto-supremo-n-006-2013-mtc.pdf

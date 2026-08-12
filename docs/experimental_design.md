@@ -40,7 +40,8 @@ Se mantienen constantes entre tecnologias:
 - posiciones iniciales del transmisor y receptor;
 - carga de aplicacion y duracion;
 - definicion de falla y metricas de seguridad;
-- nivel ambiental y semilla aleatoria.
+- nivel ambiental y semilla aleatoria;
+- potencia conducida de 14 dBm y ganancia de antena de 0 dBi durante el piloto.
 
 Cada tecnologia conserva sus parametros fisicos propios (frecuencia, ancho de banda,
 modulacion, sensibilidad y potencia permitida). Esos perfiles deben documentarse y
@@ -74,9 +75,14 @@ semillas despues de validar el piloto.
 
 ## Trafico de telemando
 
-Todos los flujos usan UDP. El control incorpora numero de secuencia, marca temporal y
-ACK de aplicacion para detectar perdidas sin introducir las retransmisiones y esperas de
-TCP.
+Todos los flujos representan datagramas de aplicacion sin retransmision de aplicacion. En
+Wi-Fi se transportan por UDP/IPv4; IEEE 802.15.4 usa directamente `MCPS-DATA`; LoRa
+requiere un adaptador MAC punto a punto. Esta abstraccion conserva la misma carga e
+instantes de generacion sin imponer una pila IP que el modulo LoRaWAN no implementa.
+
+El control incorpora numero de secuencia, marca temporal y ACK de aplicacion para medir
+perdidas. El ACK es de observacion y no dispara retransmisiones en esta fase. Los ACK y
+reintentos nativos de cada MAC permanecen habilitados y se registran.
 
 | Flujo | Carga util | Periodo | Prioridad |
 | --- | ---: | ---: | --- |

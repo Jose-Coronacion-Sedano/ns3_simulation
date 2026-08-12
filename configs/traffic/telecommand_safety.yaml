@@ -1,0 +1,70 @@
+schema_version: 1
+
+profile:
+  id: telecommand_safety_v1
+  description: Common application service offered to every Phase 1 technology
+  transport_abstraction: technology_native_datagram
+  application_retransmissions: false
+  application_ack_is_monitoring_only: true
+
+flows:
+  control:
+    direction: controller_to_machine
+    payload_bytes: 12
+    period_ms: 10
+    priority: high
+    fields:
+      sequence_number_bytes: 4
+      timestamp_ms_bytes: 4
+      command_bytes: 4
+    maximum_payload_rate_bps: 9600
+  control_ack:
+    direction: machine_to_controller
+    payload_bytes: 4
+    trigger: each_valid_control_datagram
+    priority: high
+    fields:
+      acknowledged_sequence_number_bytes: 4
+    maximum_payload_rate_bps: 3200
+  heartbeat:
+    direction: controller_to_machine
+    payload_bytes: 4
+    period_ms: 50
+    priority: high
+    maximum_payload_rate_bps: 640
+  telemetry:
+    direction: machine_to_controller
+    payload_bytes: 32
+    period_ms: 200
+    priority: low
+    maximum_payload_rate_bps: 1280
+
+offered_load:
+  maximum_application_payload_bps: 14720
+  includes_protocol_headers: false
+  includes_mac_retries: false
+  note: >-
+    The ACK contribution assumes that every control datagram is delivered.
+    Actual channel occupancy must include technology-specific headers,
+    acknowledgements, contention and retries.
+
+technology_mapping:
+  wifi_reference:
+    adapter: udp_ipv4
+    note: Native UDP/IPv4 sockets over the Wi-Fi NetDevice.
+  lr_wpan_reference:
+    adapter: direct_mcps_data
+    note: >-
+      Direct IEEE 802.15.4 MAC service. No UDP/IP or 6LoWPAN overhead is
+      assumed in the pilot.
+  lora_p2p_reference:
+    adapter: custom_direct_lora_mac
+    status: implementation_required
+    note: >-
+      The bundled lorawan NetDevice is not an IP point-to-point device. The
+      adapter must preserve the same application payloads and timestamps.
+
+safety:
+  state_on_timeout: SAFE_STOP
+  max_time_without_valid_control_ms: 200
+  critical_consecutive_losses_at_nominal_period: 20

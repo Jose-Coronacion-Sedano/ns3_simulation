@@ -4,7 +4,7 @@ campaign:
   id: C01_initial_comparison
   name: Comparacion inicial de tecnologias para telemando
   phase: 1
-  status: specification_draft
+  status: phy_profiles_defined
   executable: false
   objective: >-
     Comparar tres tecnologias bajo la misma demanda de telemando y el mismo
@@ -15,7 +15,8 @@ campaign:
     include_vlc: false
   execution_blockers:
     - Calibrar los perfiles de severidad electromagnetica con literatura o mediciones.
-    - Completar y validar los perfiles PHY de cada tecnologia.
+    - Implementar y probar los instaladores Wi-Fi e IEEE 802.15.4 en ns-3.
+    - Implementar el adaptador MAC directo para LoRa punto a punto.
     - Implementar el escenario y el recolector de metricas en ns-3.
 
 design:
@@ -24,14 +25,17 @@ design:
   technologies:
     - id: wifi_reference
       model: ieee_802_11ax_target
-      implementation_status: pending
+      profile_ref: configs/technologies/wifi_reference.yaml
+      implementation_status: profile_ready
     - id: lr_wpan_reference
       model: ieee_802_15_4_point_to_point
       label: ZigBee-like
-      implementation_status: pending
+      profile_ref: configs/technologies/lr_wpan_reference.yaml
+      implementation_status: profile_ready
     - id: lora_p2p_reference
       model: lora_point_to_point
-      implementation_status: pending
+      profile_ref: configs/technologies/lora_p2p_reference.yaml
+      implementation_status: adapter_required
   geometries:
     - id: G01_straight
       type: straight_tunnel
@@ -61,26 +65,9 @@ design:
   simulation_duration_s: 30.0
 
 traffic:
-  transport: UDP
-  control:
-    packet_size_bytes: 12
-    period_ms: 10
-    priority: high
-    sequence_number: true
-    timestamp: true
-    application_ack: true
-  control_ack:
-    packet_size_bytes: 4
-    trigger: each_valid_control_packet
-    priority: high
-  heartbeat:
-    packet_size_bytes: 4
-    period_ms: 50
-    priority: high
-  telemetry:
-    packet_size_bytes: 32
-    period_ms: 200
-    priority: low
+  profile_ref: configs/traffic/telecommand_safety.yaml
+  transport_abstraction: technology_native_datagram
+  maximum_application_payload_bps: 14720
 
 safety:
   state_on_timeout: SAFE_STOP
