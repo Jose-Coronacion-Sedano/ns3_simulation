@@ -55,15 +55,17 @@ La carga maxima de aplicacion, sin encabezados, es:
 
 | Flujo | Calculo | Tasa |
 | --- | ---: | ---: |
-| Control | 12 bytes cada 10 ms | 9600 bit/s |
-| ACK de control | 4 bytes por control valido | 3200 bit/s |
-| Heartbeat | 4 bytes cada 50 ms | 640 bit/s |
-| Telemetria | 32 bytes cada 200 ms | 1280 bit/s |
-| **Total maximo** |  | **14720 bit/s** |
+| Comando de operacion | 10 bytes cada 20 ms | 4000 bit/s |
+| ACK / estado minimo | 2 bytes cada 50 ms | 320 bit/s |
+| Telemetria basica | 16 bytes cada 500 ms | 256 bit/s |
+| **Carga periodica** |  | **4576 bit/s** |
+| Reserva para duplicacion o eventos | presupuesto | 424 bit/s |
+| **Presupuesto maximo** |  | **5000 bit/s** |
 
-El ACK se usa para observacion y no activa retransmisiones de aplicacion durante la Fase
-1. Los mecanismos nativos de reintento MAC permanecen habilitados y sus eventos deben
-registrarse.
+El ACK/estado se usa para observacion y no activa retransmisiones de aplicacion durante
+la Fase 1. La reserva no es un flujo periodico ficticio: permite duplicaciones urgentes o
+eventos asincronos, cuya activacion debe quedar trazada. Los mecanismos nativos de
+reintento MAC permanecen habilitados y sus eventos deben registrarse.
 
 ## Perfil Wi-Fi 6
 
@@ -106,16 +108,21 @@ Rb = SF * BW / 2^SF * 4/5
 Rb = 7 * 125000 / 128 * 4/5 = 5468.75 bit/s
 ```
 
-Con la formula de tiempo en aire del SX1276, 12 bytes, SF7, BW125, CR 4/5, CRC y
-cabecera explicita ocupan aproximadamente 41.216 ms. El periodo de control es 10 ms.
-Ademas, 14720 bit/s de carga util superan por un factor de 2.69 la tasa bruta, incluso
-antes de encabezados.
+El presupuesto de 5000 bit/s representa el 91.43 % de la tasa bruta. Sin embargo, esa
+comparacion por bits no incluye el costo de formar muchos paquetes pequeños. Con la
+formula de tiempo en aire del SX1276, 10 bytes, SF7, BW125, CR 4/5, CRC y cabecera
+explicita ocupan aproximadamente 41.216 ms, mientras el periodo de control es 20 ms.
+Solo los comandos requeririan el 206.08 % del tiempo disponible. Al añadir ACK/estado y
+telemetria, los flujos periodicos requieren como minimo 2.783232 segundos de canal por
+segundo, antes de activar la reserva o considerar reintentos.
 
-Por tanto, el perfil LoRa **falla la prueba previa de capacidad**. No se reducira la tasa de
-generacion ni se descartaran flujos para mejorar artificialmente el resultado. Una primera
-simulacion de sobrecarga debe cuantificar cola, perdidas y entradas a `SAFE_STOP`; despues
-podra decidirse si LoRa se excluye de la campaña completa o se conserva solo como canal
-redundante de emergencia de baja frecuencia.
+Por tanto, el perfil LoRa pasa la comprobacion por tasa bruta, pero **falla la prueba previa
+global por tiempo en aire**. No se reducira la tasa de generacion ni se descartaran flujos
+para mejorar artificialmente el resultado. Una primera simulacion de sobrecarga debe
+cuantificar cola, perdidas y entradas a `SAFE_STOP`; despues podra evaluarse un perfil
+separado SF7/BW500. Su tiempo en aire estimado es cuatro veces menor y la ocupacion
+periodica bajaria a 0.695808, pero debe validarse el costo en sensibilidad, alcance,
+regulacion e implementacion antes de sustituir el perfil BW125.
 
 ## Limitaciones del modelo
 

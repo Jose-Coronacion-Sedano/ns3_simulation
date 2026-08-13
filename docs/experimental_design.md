@@ -80,19 +80,24 @@ Wi-Fi se transportan por UDP/IPv4; IEEE 802.15.4 usa directamente `MCPS-DATA`; L
 requiere un adaptador MAC punto a punto. Esta abstraccion conserva la misma carga e
 instantes de generacion sin imponer una pila IP que el modulo LoRaWAN no implementa.
 
-El control incorpora numero de secuencia, marca temporal y ACK de aplicacion para medir
-perdidas. El ACK es de observacion y no dispara retransmisiones en esta fase. Los ACK y
+El comando incorpora numero de secuencia, marca temporal y orden de operacion. El retorno
+periodico de 2 bytes informa la ultima secuencia valida y banderas minimas del enlace; es
+de observacion y no dispara retransmisiones de aplicacion en esta fase. Los ACK y
 reintentos nativos de cada MAC permanecen habilitados y se registran.
 
 | Flujo | Carga util | Periodo | Prioridad |
 | --- | ---: | ---: | --- |
-| Control | 12 bytes | 10 ms | Alta |
-| Heartbeat | 4 bytes | 50 ms | Alta |
-| Telemetria | 32 bytes | 200 ms | Baja |
-| ACK de control | 4 bytes | Por comando valido | Alta |
+| Comando de operacion | 10 bytes | 20 ms | Alta |
+| ACK / estado minimo del enlace | 2 bytes | 50 ms | Alta |
+| Telemetria basica compacta | 16 bytes | 500 ms | Baja |
+| Reserva para duplicacion o eventos | — | — | Seguridad |
 
 El tamaño de los paquetes es carga util de aplicacion; los encabezados de las distintas
 capas deben registrarse por separado cuando se calcule la ocupacion real del canal.
+Los tres flujos periodicos suman 4576 bit/s. Se reservan otros 424 bit/s para duplicar
+comandos urgentes o transportar eventos de seguridad, dando un presupuesto maximo comun
+de 5000 bit/s. La reserva no se genera continuamente: cada experimento debe registrar
+cuando y por que se activa.
 
 ## Falla de comunicacion y seguridad
 
@@ -100,7 +105,7 @@ Se define una perdida completa de control cuando el receptor no obtiene ningun c
 valido durante 200 ms consecutivos. El estado de la maquina pasa entonces a
 `SAFE_STOP`.
 
-Con comandos cada 10 ms, el umbral equivale a 20 comandos consecutivos ausentes. El
+Con comandos cada 20 ms, el umbral equivale a 10 comandos consecutivos ausentes. El
 evento termina al recuperarse un comando valido; tanto el inicio como el final deben
 quedar registrados.
 

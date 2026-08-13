@@ -4,8 +4,8 @@ technology:
   id: lora_p2p_reference
   display_name: LoRa point-to-point reference
   family: LoRa_CSS
-  implementation_status: adapter_required
-  profile_purpose: fastest_robust_lora_baseline
+  implementation_status: adapter_and_profile_validation_required
+  profile_purpose: robust_bw125_reference_baseline
   not_lorawan: true
 
 ns3:
@@ -40,7 +40,7 @@ phy:
   nominal_raw_bitrate_bps: 5468.75
   reference_rx_sensitivity_dbm: -123.0
   control_payload_time_on_air_ms: 41.216
-  time_on_air_payload_bytes: 12
+  time_on_air_payload_bytes: 10
 
 mac:
   topology: direct_half_duplex_pair
@@ -52,17 +52,34 @@ mac:
   application_mapping: custom_direct_lora_mac
 
 preflight:
-  maximum_application_payload_bps: 14720
-  raw_rate_utilization_lower_bound: 2.692
-  control_period_ms: 10
+  scheduled_application_payload_bps: 4576
+  safety_reserve_bps: 424
+  maximum_application_payload_bps: 5000
+  raw_rate_utilization_lower_bound: 0.914286
+  control_period_ms: 20
   control_payload_time_on_air_ms: 41.216
-  raw_capacity_check: fail
-  deadline_check_before_headers: fail
+  control_airtime_utilization: 2.0608
+  scheduled_packet_airtime_utilization_lower_bound: 2.783232
+  raw_capacity_check: pass
+  control_period_airtime_check: fail
+  packetized_airtime_check: fail
+  overall_preflight_check: fail
   interpretation: >-
-    The offered application payload exceeds the nominal raw bitrate before
-    adding headers or retries. A 12-byte control payload also occupies the
-    channel for more than four control periods. Simulation must report this
-    overload rather than silently throttle the source.
+    The 5 kbit/s application budget is below the nominal raw bitrate, but this
+    payload-only comparison hides LoRa packet overhead. A 10-byte command takes
+    41.216 ms and is generated every 20 ms. The scheduled command, link-state
+    and telemetry packets require at least 2.783232 channel-seconds per second,
+    before reserve activation or retries. Simulation must report this overload
+    rather than silently throttle or aggregate the control source.
+
+feasibility_option:
+  candidate_bandwidth_hz: 500000
+  estimated_scheduled_packet_airtime_utilization: 0.695808
+  status: requires_profile_validation
+  note: >-
+    At the same SF7 and coding rate, quadrupling bandwidth divides symbol time
+    and packet airtime by four. This is a candidate for a separate sensitivity
+    and regulatory review, not an automatic replacement of the reference mode.
 
 regulatory_context:
   country: PE

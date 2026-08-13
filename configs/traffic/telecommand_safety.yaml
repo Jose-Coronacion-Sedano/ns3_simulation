@@ -10,43 +10,41 @@ profile:
 flows:
   control:
     direction: controller_to_machine
-    payload_bytes: 12
-    period_ms: 10
+    payload_bytes: 10
+    period_ms: 20
     priority: high
     fields:
-      sequence_number_bytes: 4
+      sequence_number_bytes: 2
       timestamp_ms_bytes: 4
       command_bytes: 4
-    maximum_payload_rate_bps: 9600
-  control_ack:
+    maximum_payload_rate_bps: 4000
+  link_ack_state:
     direction: machine_to_controller
-    payload_bytes: 4
-    trigger: each_valid_control_datagram
-    priority: high
-    fields:
-      acknowledged_sequence_number_bytes: 4
-    maximum_payload_rate_bps: 3200
-  heartbeat:
-    direction: controller_to_machine
-    payload_bytes: 4
+    payload_bytes: 2
     period_ms: 50
     priority: high
-    maximum_payload_rate_bps: 640
+    fields:
+      last_valid_sequence_number_bytes: 1
+      link_state_flags_bytes: 1
+    maximum_payload_rate_bps: 320
   telemetry:
     direction: machine_to_controller
-    payload_bytes: 32
-    period_ms: 200
+    payload_bytes: 16
+    period_ms: 500
     priority: low
-    maximum_payload_rate_bps: 1280
+    maximum_payload_rate_bps: 256
 
 offered_load:
-  maximum_application_payload_bps: 14720
+  scheduled_application_payload_bps: 4576
+  safety_reserve_bps: 424
+  maximum_application_payload_bps: 5000
   includes_protocol_headers: false
   includes_mac_retries: false
   note: >-
-    The ACK contribution assumes that every control datagram is delivered.
+    The 424 bit/s reserve is a capacity budget for duplicated urgent commands
+    or asynchronous safety events, not a continuously generated periodic flow.
     Actual channel occupancy must include technology-specific headers,
-    acknowledgements, contention and retries.
+    acknowledgements, contention, retries and the reserve activation pattern.
 
 technology_mapping:
   wifi_reference:
@@ -67,4 +65,4 @@ technology_mapping:
 safety:
   state_on_timeout: SAFE_STOP
   max_time_without_valid_control_ms: 200
-  critical_consecutive_losses_at_nominal_period: 20
+  critical_consecutive_losses_at_nominal_period: 10

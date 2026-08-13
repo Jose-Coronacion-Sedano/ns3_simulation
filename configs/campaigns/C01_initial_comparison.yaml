@@ -17,6 +17,7 @@ campaign:
     - Calibrar los perfiles de severidad electromagnetica con literatura o mediciones.
     - Implementar y probar los instaladores Wi-Fi e IEEE 802.15.4 en ns-3.
     - Implementar el adaptador MAC directo para LoRa punto a punto.
+    - Validar BW500 para LoRa o ejecutar BW125 explicitamente como caso de sobrecarga.
     - Implementar el escenario y el recolector de metricas en ns-3.
 
 design:
@@ -35,7 +36,7 @@ design:
     - id: lora_p2p_reference
       model: lora_point_to_point
       profile_ref: configs/technologies/lora_p2p_reference.yaml
-      implementation_status: adapter_required
+      implementation_status: adapter_and_profile_validation_required
   geometries:
     - id: G01_straight
       type: straight_tunnel
@@ -67,12 +68,14 @@ design:
 traffic:
   profile_ref: configs/traffic/telecommand_safety.yaml
   transport_abstraction: technology_native_datagram
-  maximum_application_payload_bps: 14720
+  scheduled_application_payload_bps: 4576
+  safety_reserve_bps: 424
+  maximum_application_payload_bps: 5000
 
 safety:
   state_on_timeout: SAFE_STOP
   max_time_without_valid_control_ms: 200
-  critical_consecutive_losses: 20
+  critical_consecutive_losses: 10
 
 electromagnetic_interference:
   representation: ordinal_uncalibrated
