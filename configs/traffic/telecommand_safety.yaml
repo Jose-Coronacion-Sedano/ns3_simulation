@@ -1,0 +1,72 @@
+schema_version: 1
+
+profile:
+  id: telecommand_safety_v2
+  description: Common application service offered to every Phase 1 technology
+  transport_abstraction: technology_native_datagram
+  application_retransmissions: false
+  application_ack_is_monitoring_only: true
+
+flows:
+  control:
+    direction: controller_to_machine
+    payload_bytes: 8
+    period_ms: 50
+    priority: high
+    fields:
+      analog_commands_bytes: 5
+      digital_commands_bytes: 2
+      sequence_number_bytes: 1
+    maximum_payload_rate_bps: 1280
+  control_ack:
+    direction: machine_to_controller
+    payload_bytes: 1
+    period_ms: 50
+    priority: high
+    generation: one_per_valid_control_datagram
+    fields:
+      acknowledged_sequence_number_bytes: 1
+    maximum_payload_rate_bps: 160
+  telemetry:
+    direction: machine_to_controller
+    payload_bytes: 8
+    period_ms: 150
+    priority: low
+    deferrable_if_high_priority_pending: true
+    queue_policy: latest_value_wins
+    maximum_payload_rate_bps: 426.666667
+
+offered_load:
+  scheduled_application_payload_bps: 1866.666667
+  safety_reserve_bps: 424
+  maximum_application_payload_bps: 2290.666667
+  includes_protocol_headers: false
+  includes_mac_retries: false
+  note: >-
+    The 424 bit/s reserve is a capacity budget for duplicated 8-byte urgent
+    commands or asynchronous safety events, not a continuously generated flow.
+    Telemetry is generated every 150 ms but yields to command and ACK traffic;
+    if samples accumulate, only the newest pending value is retained.
+    Actual channel occupancy must include technology-specific headers,
+    acknowledgements, contention, retries and the reserve activation pattern.
+
+technology_mapping:
+  wifi_reference:
+    adapter: udp_ipv4
+    note: Native UDP/IPv4 sockets over the Wi-Fi NetDevice.
+  lr_wpan_reference:
+    adapter: direct_mcps_data
+    note: >-
+      Direct IEEE 802.15.4 MAC service. No UDP/IP or 6LoWPAN overhead is
+      assumed in the pilot.
+  lora_p2p_reference:
+    adapter: custom_direct_lora_mac
+    status: implementation_required
+    note: >-
+      The bundled lorawan NetDevice is not an IP point-to-point device. The
+      adapter must preserve the same application payloads and timestamps.
+
+safety:
+  state_on_timeout: SAFE_STOP
+  max_time_without_valid_control_ms: 200
+  critical_consecutive_losses_at_nominal_period: 4
