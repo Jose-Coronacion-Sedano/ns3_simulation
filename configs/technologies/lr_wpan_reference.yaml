@@ -50,8 +50,8 @@ mac:
   zigbee_stack_enabled: false
 
 preflight:
-  maximum_application_payload_bps: 5000
-  raw_rate_utilization_lower_bound: 0.02
+  maximum_application_payload_bps: 2290.666667
+  raw_rate_utilization_lower_bound: 0.009162667
   raw_capacity_check: pass
   caveat: Raw-rate feasibility does not prove deadline or reliability compliance.
 

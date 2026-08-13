@@ -5,7 +5,7 @@ technology:
   display_name: LoRa point-to-point reference
   family: LoRa_CSS
   implementation_status: adapter_and_profile_validation_required
-  profile_purpose: robust_bw125_reference_baseline
+  profile_purpose: sf7_bw250_operating_candidate
   not_lorawan: true
 
 ns3:
@@ -30,17 +30,22 @@ comparison:
 phy:
   center_frequency_mhz: 915.2
   regional_reference: AU915-928
-  bandwidth_hz: 125000
+  bandwidth_hz: 250000
   spreading_factor: 7
   coding_rate: 4/5
   explicit_header: true
   payload_crc: true
   preamble_symbols: 8
   low_data_rate_optimization: false
-  nominal_raw_bitrate_bps: 5468.75
-  reference_rx_sensitivity_dbm: -123.0
-  control_payload_time_on_air_ms: 41.216
-  time_on_air_payload_bytes: 10
+  nominal_raw_bitrate_bps: 10937.5
+  reference_rx_sensitivity_dbm: null
+  sensitivity_calibration_required: true
+  control_payload_time_on_air_ms: 18.048
+  control_payload_bytes: 8
+  ack_payload_time_on_air_ms: 12.928
+  ack_payload_bytes: 1
+  telemetry_payload_time_on_air_ms: 18.048
+  telemetry_payload_bytes: 8
 
 mac:
   topology: direct_half_duplex_pair
@@ -52,34 +57,53 @@ mac:
   application_mapping: custom_direct_lora_mac
 
 preflight:
-  scheduled_application_payload_bps: 4576
+  scheduled_application_payload_bps: 1866.666667
   safety_reserve_bps: 424
-  maximum_application_payload_bps: 5000
-  raw_rate_utilization_lower_bound: 0.914286
-  control_period_ms: 20
-  control_payload_time_on_air_ms: 41.216
-  control_airtime_utilization: 2.0608
-  scheduled_packet_airtime_utilization_lower_bound: 2.783232
+  maximum_application_payload_bps: 2290.666667
+  raw_rate_utilization_lower_bound: 0.209432381
+  control_period_ms: 50
+  control_payload_time_on_air_ms: 18.048
+  control_airtime_utilization: 0.36096
+  ack_period_ms: 50
+  ack_payload_time_on_air_ms: 12.928
+  ack_airtime_utilization: 0.25856
+  telemetry_period_ms: 150
+  telemetry_payload_time_on_air_ms: 18.048
+  telemetry_airtime_utilization: 0.12032
+  scheduled_packet_airtime_utilization_lower_bound: 0.73984
+  safety_reserve_airtime_utilization_if_duplicated_controls: 0.119568
+  maximum_packet_airtime_utilization_lower_bound: 0.859408
+  telemetry_bearing_cycle_airtime_ms: 49.024
+  ideal_guard_time_in_50_ms_cycle_ms: 0.976
   raw_capacity_check: pass
-  control_period_airtime_check: fail
-  packetized_airtime_check: fail
-  overall_preflight_check: fail
+  control_period_airtime_check: pass
+  packetized_airtime_check: pass_with_tight_margin
+  overall_preflight_check: conditional_pass
   interpretation: >-
-    The 5 kbit/s application budget is below the nominal raw bitrate, but this
-    payload-only comparison hides LoRa packet overhead. A 10-byte command takes
-    41.216 ms and is generated every 20 ms. The scheduled command, link-state
-    and telemetry packets require at least 2.783232 channel-seconds per second,
-    before reserve activation or retries. Simulation must report this overload
-    rather than silently throttle or aggregate the control source.
+    SF7/BW250 can carry the scheduled profile in the ideal packet-airtime model.
+    A cycle containing an 8-byte command, its separate 1-byte ACK and an 8-byte
+    telemetry sample uses 49.024 ms of a 50 ms control interval, leaving only
+    0.976 ms before turnaround, processing, contention or retries. Telemetry
+    must therefore yield to command and ACK traffic and may be deferred. With
+    the complete 424 bit/s reserve represented as duplicated 8-byte commands,
+    estimated channel occupancy reaches 85.9408 percent.
 
-feasibility_option:
-  candidate_bandwidth_hz: 500000
-  estimated_scheduled_packet_airtime_utilization: 0.695808
-  status: requires_profile_validation
-  note: >-
-    At the same SF7 and coding rate, quadrupling bandwidth divides symbol time
-    and packet airtime by four. This is a candidate for a separate sensitivity
-    and regulatory review, not an automatic replacement of the reference mode.
+sensitivity_cases:
+  - bandwidth_hz: 125000
+    estimated_scheduled_packet_airtime_utilization: 1.47968
+    estimated_maximum_packet_airtime_utilization: 1.718816
+    status: overload_reference
+  - bandwidth_hz: 500000
+    estimated_scheduled_packet_airtime_utilization: 0.36992
+    estimated_maximum_packet_airtime_utilization: 0.429704
+    status: requires_profile_validation
+
+model_limitations:
+  bandwidth_note: >-
+    The LoRa module accepts bandwidth as a time-on-air parameter, but its
+    end-device and gateway sensitivity tables are documented for 125 kHz.
+    BW250 results must not reuse the BW125 sensitivity without calibration or
+    a model extension.
 
 regulatory_context:
   country: PE

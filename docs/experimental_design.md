@@ -80,24 +80,32 @@ Wi-Fi se transportan por UDP/IPv4; IEEE 802.15.4 usa directamente `MCPS-DATA`; L
 requiere un adaptador MAC punto a punto. Esta abstraccion conserva la misma carga e
 instantes de generacion sin imponer una pila IP que el modulo LoRaWAN no implementa.
 
-El comando incorpora numero de secuencia, marca temporal y orden de operacion. El retorno
-periodico de 2 bytes informa la ultima secuencia valida y banderas minimas del enlace; es
-de observacion y no dispara retransmisiones de aplicacion en esta fase. Los ACK y
-reintentos nativos de cada MAC permanecen habilitados y se registran.
+El comando ocupa 8 bytes: 5 bytes para ordenes analogicas, 2 bytes para ordenes
+digitales y 1 byte para el numero de secuencia. El ACK se envia como un datagrama
+separado de 1 byte en sentido maquina-controlador y confirma la secuencia del ultimo
+comando valido. Es de observacion y no dispara retransmisiones de aplicacion en esta
+fase. Los ACK y reintentos nativos de cada MAC permanecen habilitados y se registran.
 
 | Flujo | Carga util | Periodo | Prioridad |
 | --- | ---: | ---: | --- |
-| Comando de operacion | 10 bytes | 20 ms | Alta |
-| ACK / estado minimo del enlace | 2 bytes | 50 ms | Alta |
-| Telemetria basica compacta | 16 bytes | 500 ms | Baja |
+| Comando de operacion + secuencia | 8 bytes | 50 ms | Alta |
+| ACK de comando separado | 1 byte | Por comando valido (nominal 50 ms) | Alta |
+| Telemetria basica compacta | 8 bytes | 150 ms | Baja, desplazable |
 | Reserva para duplicacion o eventos | — | — | Seguridad |
 
 El tamaño de los paquetes es carga util de aplicacion; los encabezados de las distintas
 capas deben registrarse por separado cuando se calcule la ocupacion real del canal.
-Los tres flujos periodicos suman 4576 bit/s. Se reservan otros 424 bit/s para duplicar
-comandos urgentes o transportar eventos de seguridad, dando un presupuesto maximo comun
-de 5000 bit/s. La reserva no se genera continuamente: cada experimento debe registrar
-cuando y por que se activa.
+Los tres flujos programados suman aproximadamente 1866.667 bit/s: 1280 bit/s de
+comando, hasta 160 bit/s de ACK y 426.667 bit/s de telemetria. Se reservan otros
+424 bit/s para duplicar comandos urgentes o transportar eventos de seguridad, dando un
+presupuesto maximo comun de 2290.667 bit/s. La reserva no se genera continuamente: cada
+experimento debe registrar cuando y por que se activa.
+
+La telemetria se genera cada 150 ms, pero no puede retrasar un comando ni su ACK. Cuando
+coincida con trafico de prioridad alta, se desplazara hasta el siguiente hueco disponible.
+Si se acumulan muestras, se conserva solo la mas reciente (`latest_value_wins`) para no
+transmitir informacion obsoleta. La simulacion registrara el instante de generacion,
+transmision, recepcion y cualquier reemplazo para medir la antiguedad real de la muestra.
 
 ## Falla de comunicacion y seguridad
 
@@ -105,7 +113,7 @@ Se define una perdida completa de control cuando el receptor no obtiene ningun c
 valido durante 200 ms consecutivos. El estado de la maquina pasa entonces a
 `SAFE_STOP`.
 
-Con comandos cada 20 ms, el umbral equivale a 10 comandos consecutivos ausentes. El
+Con comandos cada 50 ms, el umbral equivale a 4 comandos consecutivos ausentes. El
 evento termina al recuperarse un comando valido; tanto el inicio como el final deben
 quedar registrados.
 

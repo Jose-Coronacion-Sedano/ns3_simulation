@@ -17,7 +17,7 @@ campaign:
     - Calibrar los perfiles de severidad electromagnetica con literatura o mediciones.
     - Implementar y probar los instaladores Wi-Fi e IEEE 802.15.4 en ns-3.
     - Implementar el adaptador MAC directo para LoRa punto a punto.
-    - Validar BW500 para LoRa o ejecutar BW125 explicitamente como caso de sobrecarga.
+    - Calibrar la sensibilidad de LoRa SF7/BW250 o extender el modelo para ese ancho de banda.
     - Implementar el escenario y el recolector de metricas en ns-3.
 
 design:
@@ -68,14 +68,16 @@ design:
 traffic:
   profile_ref: configs/traffic/telecommand_safety.yaml
   transport_abstraction: technology_native_datagram
-  scheduled_application_payload_bps: 4576
+  scheduled_application_payload_bps: 1866.666667
   safety_reserve_bps: 424
-  maximum_application_payload_bps: 5000
+  maximum_application_payload_bps: 2290.666667
+  telemetry_deferrable: true
+  telemetry_queue_policy: latest_value_wins
 
 safety:
   state_on_timeout: SAFE_STOP
   max_time_without_valid_control_ms: 200
-  critical_consecutive_losses: 10
+  critical_consecutive_losses: 4
 
 electromagnetic_interference:
   representation: ordinal_uncalibrated

@@ -51,8 +51,8 @@ mac:
   application_mapping: udp_ipv4
 
 preflight:
-  maximum_application_payload_bps: 5000
-  raw_rate_utilization_lower_bound: 0.0005814
+  maximum_application_payload_bps: 2290.666667
+  raw_rate_utilization_lower_bound: 0.000266357
   raw_capacity_check: pass
   caveat: Raw-rate feasibility does not prove deadline or reliability compliance.
 

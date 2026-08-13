@@ -1,7 +1,7 @@
 schema_version: 1
 
 profile:
-  id: telecommand_safety_v1
+  id: telecommand_safety_v2
   description: Common application service offered to every Phase 1 technology
   transport_abstraction: technology_native_datagram
   application_retransmissions: false
@@ -10,39 +10,43 @@ profile:
 flows:
   control:
     direction: controller_to_machine
-    payload_bytes: 10
-    period_ms: 20
-    priority: high
-    fields:
-      sequence_number_bytes: 2
-      timestamp_ms_bytes: 4
-      command_bytes: 4
-    maximum_payload_rate_bps: 4000
-  link_ack_state:
-    direction: machine_to_controller
-    payload_bytes: 2
+    payload_bytes: 8
     period_ms: 50
     priority: high
     fields:
-      last_valid_sequence_number_bytes: 1
-      link_state_flags_bytes: 1
-    maximum_payload_rate_bps: 320
+      analog_commands_bytes: 5
+      digital_commands_bytes: 2
+      sequence_number_bytes: 1
+    maximum_payload_rate_bps: 1280
+  control_ack:
+    direction: machine_to_controller
+    payload_bytes: 1
+    period_ms: 50
+    priority: high
+    generation: one_per_valid_control_datagram
+    fields:
+      acknowledged_sequence_number_bytes: 1
+    maximum_payload_rate_bps: 160
   telemetry:
     direction: machine_to_controller
-    payload_bytes: 16
-    period_ms: 500
+    payload_bytes: 8
+    period_ms: 150
     priority: low
-    maximum_payload_rate_bps: 256
+    deferrable_if_high_priority_pending: true
+    queue_policy: latest_value_wins
+    maximum_payload_rate_bps: 426.666667
 
 offered_load:
-  scheduled_application_payload_bps: 4576
+  scheduled_application_payload_bps: 1866.666667
   safety_reserve_bps: 424
-  maximum_application_payload_bps: 5000
+  maximum_application_payload_bps: 2290.666667
   includes_protocol_headers: false
   includes_mac_retries: false
   note: >-
-    The 424 bit/s reserve is a capacity budget for duplicated urgent commands
-    or asynchronous safety events, not a continuously generated periodic flow.
+    The 424 bit/s reserve is a capacity budget for duplicated 8-byte urgent
+    commands or asynchronous safety events, not a continuously generated flow.
+    Telemetry is generated every 150 ms but yields to command and ACK traffic;
+    if samples accumulate, only the newest pending value is retained.
     Actual channel occupancy must include technology-specific headers,
     acknowledgements, contention, retries and the reserve activation pattern.
 
@@ -65,4 +69,4 @@ technology_mapping:
 safety:
   state_on_timeout: SAFE_STOP
   max_time_without_valid_control_ms: 200
-  critical_consecutive_losses_at_nominal_period: 10
+  critical_consecutive_losses_at_nominal_period: 4

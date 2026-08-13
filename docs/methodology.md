@@ -55,17 +55,23 @@ La carga maxima de aplicacion, sin encabezados, es:
 
 | Flujo | Calculo | Tasa |
 | --- | ---: | ---: |
-| Comando de operacion | 10 bytes cada 20 ms | 4000 bit/s |
-| ACK / estado minimo | 2 bytes cada 50 ms | 320 bit/s |
-| Telemetria basica | 16 bytes cada 500 ms | 256 bit/s |
-| **Carga periodica** |  | **4576 bit/s** |
+| Comando de operacion + secuencia | 8 bytes cada 50 ms | 1280 bit/s |
+| ACK separado | 1 byte por comando valido | hasta 160 bit/s |
+| Telemetria basica | 8 bytes cada 150 ms | 426.667 bit/s |
+| **Carga programada** |  | **1866.667 bit/s** |
 | Reserva para duplicacion o eventos | presupuesto | 424 bit/s |
-| **Presupuesto maximo** |  | **5000 bit/s** |
+| **Presupuesto maximo** |  | **2290.667 bit/s** |
 
-El ACK/estado se usa para observacion y no activa retransmisiones de aplicacion durante
+El ACK de comando se usa para observacion y no activa retransmisiones de aplicacion durante
 la Fase 1. La reserva no es un flujo periodico ficticio: permite duplicaciones urgentes o
 eventos asincronos, cuya activacion debe quedar trazada. Los mecanismos nativos de
 reintento MAC permanecen habilitados y sus eventos deben registrarse.
+
+La telemetria tiene prioridad baja. Se genera cada 150 ms, pero puede desplazarse si su
+transmision pone en riesgo el plazo del comando o del ACK. La cola conserva solamente la
+muestra mas reciente, de modo que una perturbacion no produzca una rafaga posterior de
+datos obsoletos. Se mediran tanto el retardo de cola como la antiguedad de la muestra al
+llegar al controlador.
 
 ## Perfil Wi-Fi 6
 
@@ -96,33 +102,45 @@ advierte que no constituye una validacion completa contra hardware real.
 
 ## Perfil LoRa punto a punto
 
-El perfil mas rapido conservador usa 915.2 MHz, ancho de banda de 125 kHz, SF7,
+El perfil operativo candidato usa 915.2 MHz, ancho de banda de 250 kHz, SF7,
 codificacion 4/5, cabecera explicita, CRC y preambulo de 8 simbolos. La frecuencia se
 encuentra dentro de 915-928 MHz y toma AU915-928 como referencia regional para Peru;
-no convierte el enlace en LoRaWAN.
+no convierte el enlace en LoRaWAN ni afirma que BW250 sea un canal LoRaWAN regional.
 
 La tasa nominal se deriva como:
 
 ```text
 Rb = SF * BW / 2^SF * 4/5
-Rb = 7 * 125000 / 128 * 4/5 = 5468.75 bit/s
+Rb = 7 * 250000 / 128 * 4/5 = 10937.5 bit/s
 ```
 
-El presupuesto de 5000 bit/s representa el 91.43 % de la tasa bruta. Sin embargo, esa
-comparacion por bits no incluye el costo de formar muchos paquetes pequeños. Con la
-formula de tiempo en aire del SX1276, 10 bytes, SF7, BW125, CR 4/5, CRC y cabecera
-explicita ocupan aproximadamente 41.216 ms, mientras el periodo de control es 20 ms.
-Solo los comandos requeririan el 206.08 % del tiempo disponible. Al añadir ACK/estado y
-telemetria, los flujos periodicos requieren como minimo 2.783232 segundos de canal por
-segundo, antes de activar la reserva o considerar reintentos.
+El presupuesto maximo de 2290.667 bit/s representa el 20.94 % de la tasa bruta, pero
+esa comparacion por bits no incluye el costo de formar paquetes pequenos. Con la formula
+de tiempo en aire LoRa, SF7/BW250, CR 4/5, CRC y cabecera explicita, un comando de
+8 bytes ocupa 18.048 ms, un ACK de 1 byte ocupa 12.928 ms y una telemetria de 8 bytes
+ocupa 18.048 ms.
 
-Por tanto, el perfil LoRa pasa la comprobacion por tasa bruta, pero **falla la prueba previa
-global por tiempo en aire**. No se reducira la tasa de generacion ni se descartaran flujos
-para mejorar artificialmente el resultado. Una primera simulacion de sobrecarga debe
-cuantificar cola, perdidas y entradas a `SAFE_STOP`; despues podra evaluarse un perfil
-separado SF7/BW500. Su tiempo en aire estimado es cuatro veces menor y la ocupacion
-periodica bajaria a 0.695808, pero debe validarse el costo en sensibilidad, alcance,
-regulacion e implementacion antes de sustituir el perfil BW125.
+Los comandos consumen 0.36096 segundos de canal por segundo, los ACK hasta 0.25856 y
+la telemetria nominal 0.12032. La ocupacion programada minima es entonces 0.73984. Si
+los 424 bit/s de reserva se utilizaran completamente para duplicar comandos de 8 bytes,
+se agregaria 0.119568 y la ocupacion estimada alcanzaria 0.859408, es decir, 85.9408 %.
+
+Un intervalo que contenga comando, ACK y telemetria suma 49.024 ms de tiempo en aire y
+deja solo 0.976 ms dentro del ciclo de control de 50 ms. Ese resto no basta para asumir
+sin validacion los cambios RX/TX, procesamiento, contencion o reintentos. Por ello la
+prueba previa es un **aprobado condicional**: comando y ACK tienen prioridad estricta y
+la telemetria se desplaza al siguiente hueco cuando sea necesario.
+
+Como sensibilidad, BW125 elevaria la ocupacion programada a 1.47968 y la maxima a
+1.718816, por lo que seguiria siendo un caso de sobrecarga. BW500 las reduciria a
+0.36992 y 0.429704, respectivamente, pero tambien requiere validar sensibilidad,
+alcance, regulacion e implementacion.
+
+El modulo LoRa permite usar el ancho de banda para calcular el tiempo en aire, pero sus
+tablas de sensibilidad de dispositivo final y gateway estan documentadas para 125 kHz.
+Por eso el perfil BW250 deja la sensibilidad sin valor numerico: antes de obtener
+resultados de cobertura debe calibrarse o extenderse el modelo. No se reutilizara
+silenciosamente la sensibilidad BW125.
 
 ## Limitaciones del modelo
 
@@ -131,6 +149,8 @@ regulacion e implementacion antes de sustituir el perfil BW125.
 - `LrWpanErrorModel` se basa en O-QPSK sobre AWGN y no sustituye mediciones en tunel.
 - El modulo LoRa incluido modela LoRaWAN, no un enlace IP P2P. El adaptador directo es
   un requisito de implementacion y debe probarse con casos unitarios de tiempo en aire.
+- El tiempo en aire admite BW250, pero la sensibilidad para ese ancho de banda debe
+  calibrarse o incorporarse expresamente al modelo.
 - Los perfiles de propagacion e interferencia electromagnetica siguen sin calibrar. Estos
   perfiles PHY no inventan sus valores.
 
