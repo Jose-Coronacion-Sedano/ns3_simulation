@@ -5,6 +5,8 @@ ns3/ns-allinone-3.46.1/
 ns3/ns-allinone-3.46.1.tar.bz2
 ns3/results/
 ns3/scenarios/results/
+ns3/ns-allinone-*/
+ns3/ns-allinone-*.tar.bz2
 
 # -------------------------------------------------
 # Resultados de simulación
