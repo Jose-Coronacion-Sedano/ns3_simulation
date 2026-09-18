@@ -1,0 +1,32 @@
+schema_version: 1
+
+ns3:
+  distribution: ns-allinone
+  version: 3.46.1
+  archive: ns-allinone-3.46.1.tar.bz2
+  archive_sha1: 08001a64334ae83cf1f04ca90aab9c9eb4122304
+  release_url: https://www.nsnam.org/releases/ns-3-46/
+  download_url: https://www.nsnam.org/releases/ns-3-46/download/
+  rationale: >-
+    The repository was prepared for ns-allinone-3.46.1. This release bundles
+    the contributed lorawan module required for the LoRa reference profile.
+
+modules:
+  wifi:
+    source: ns3-mainline
+    version: 3.46.1
+  lr_wpan:
+    source: ns3-mainline
+    version: 3.46.1
+  lorawan:
+    source: ns3-allinone-bundled-app
+    version: 0.3.5
+    app_url: https://apps.nsnam.org/app/lorawan/
+    scope_note: >-
+      The bundled module models LoRaWAN. Phase 1 uses its LoRa PHY concepts
+      as a reference, but a direct point-to-point MAC adapter is still required.
+
+compatibility_policy:
+  allow_automatic_version_upgrade: false
+  record_runtime_versions_in_results: true
+  require_profile_smoke_test_after_upgrade: true

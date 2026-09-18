@@ -1,0 +1,132 @@
+schema_version: 1
+
+technology:
+  id: lora_p2p_reference
+  display_name: LoRa point-to-point reference
+  family: LoRa_CSS
+  implementation_status: adapter_and_profile_validation_required
+  profile_purpose: sf7_bw250_operating_candidate
+  not_lorawan: true
+
+ns3:
+  version: 3.46.1
+  bundled_module: lorawan
+  bundled_module_version: 0.3.5
+  bundled_module_scope: LoRaWAN_Class_A
+  compatibility_limitation: >-
+    LoraNetDevice is a LoRaWAN device and its own source notes that IP is not
+    used in the standard. A direct point-to-point MAC adapter must be written
+    before this profile can execute the common application service.
+  required_adapter: custom_direct_lora_mac
+
+comparison:
+  traffic_profile_ref: configs/traffic/telecommand_safety.yaml
+  conducted_tx_power_dbm: 14.0
+  tx_antenna_gain_dbi: 0.0
+  rx_antenna_gain_dbi: 0.0
+  nominal_eirp_dbm: 14.0
+  power_mode: common_controlled_eirp
+
+phy:
+  center_frequency_mhz: 915.2
+  regional_reference: AU915-928
+  bandwidth_hz: 250000
+  spreading_factor: 7
+  coding_rate: 4/5
+  explicit_header: true
+  payload_crc: true
+  preamble_symbols: 8
+  low_data_rate_optimization: false
+  nominal_raw_bitrate_bps: 10937.5
+  reference_rx_sensitivity_dbm: null
+  sensitivity_calibration_required: true
+  control_payload_time_on_air_ms: 18.048
+  control_payload_bytes: 8
+  ack_payload_time_on_air_ms: 12.928
+  ack_payload_bytes: 1
+  telemetry_payload_time_on_air_ms: 18.048
+  telemetry_payload_bytes: 8
+
+mac:
+  topology: direct_half_duplex_pair
+  lorawan_enabled: false
+  channel_access: single_link_scheduled
+  native_mac_ack: false
+  application_ack_is_monitoring_only: true
+  application_retransmissions: false
+  application_mapping: custom_direct_lora_mac
+
+preflight:
+  scheduled_application_payload_bps: 1866.666667
+  safety_reserve_bps: 424
+  maximum_application_payload_bps: 2290.666667
+  raw_rate_utilization_lower_bound: 0.209432381
+  control_period_ms: 50
+  control_payload_time_on_air_ms: 18.048
+  control_airtime_utilization: 0.36096
+  ack_period_ms: 50
+  ack_payload_time_on_air_ms: 12.928
+  ack_airtime_utilization: 0.25856
+  telemetry_period_ms: 150
+  telemetry_payload_time_on_air_ms: 18.048
+  telemetry_airtime_utilization: 0.12032
+  scheduled_packet_airtime_utilization_lower_bound: 0.73984
+  safety_reserve_airtime_utilization_if_duplicated_controls: 0.119568
+  maximum_packet_airtime_utilization_lower_bound: 0.859408
+  telemetry_bearing_cycle_airtime_ms: 49.024
+  ideal_guard_time_in_50_ms_cycle_ms: 0.976
+  raw_capacity_check: pass
+  control_period_airtime_check: pass
+  packetized_airtime_check: pass_with_tight_margin
+  overall_preflight_check: conditional_pass
+  interpretation: >-
+    SF7/BW250 can carry the scheduled profile in the ideal packet-airtime model.
+    A cycle containing an 8-byte command, its separate 1-byte ACK and an 8-byte
+    telemetry sample uses 49.024 ms of a 50 ms control interval, leaving only
+    0.976 ms before turnaround, processing, contention or retries. Telemetry
+    must therefore yield to command and ACK traffic and may be deferred. With
+    the complete 424 bit/s reserve represented as duplicated 8-byte commands,
+    estimated channel occupancy reaches 85.9408 percent.
+
+sensitivity_cases:
+  - bandwidth_hz: 125000
+    estimated_scheduled_packet_airtime_utilization: 1.47968
+    estimated_maximum_packet_airtime_utilization: 1.718816
+    status: overload_reference
+  - bandwidth_hz: 500000
+    estimated_scheduled_packet_airtime_utilization: 0.36992
+    estimated_maximum_packet_airtime_utilization: 0.429704
+    status: requires_profile_validation
+
+model_limitations:
+  bandwidth_note: >-
+    The LoRa module accepts bandwidth as a time-on-air parameter, but its
+    end-device and gateway sensitivity tables are documented for 125 kHz.
+    BW250 results must not reuse the BW125 sensitivity without calibration or
+    a model extension.
+
+regulatory_context:
+  country: PE
+  unlicensed_band_mhz:
+    - 915.0
+    - 928.0
+  cited_max_eirp_dbm: 30.0
+  simulated_eirp_dbm: 14.0
+  channel_plan_is_reference_only: true
+  hardware_deployment_requires_homologation_review: true
+
+sources:
+  - id: ns3_allinone_3_46
+    url: https://www.nsnam.org/releases/ns-3-46/
+  - id: ns3_lorawan_app
+    url: https://apps.nsnam.org/app/lorawan/
+  - id: lorawan_netdevice_source
+    url: https://github.com/signetlabdei/lorawan/blob/v0.3.5/model/lora-net-device.h
+  - id: semtech_lora_overview
+    url: https://www.semtech.com/uploads/technology/LoRa/lora-and-lorawan.pdf
+  - id: semtech_sx1276
+    url: https://www.semtech.com/products/wireless-rf/lora-connect/sx1276
+  - id: lora_alliance_rp002
+    url: https://resources.lora-alliance.org/home/rp002-1-0-4-regional-parameters
+  - id: mtc_ds_006_2013
+    url: https://cdn.www.gob.pe/uploads/document/file/5412657/343700-decreto-supremo-n-006-2013-mtc.pdf

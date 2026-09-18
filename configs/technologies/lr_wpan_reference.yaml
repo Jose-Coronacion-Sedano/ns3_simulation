@@ -1,0 +1,77 @@
+schema_version: 1
+
+technology:
+  id: lr_wpan_reference
+  display_name: IEEE 802.15.4 point-to-point reference
+  family: IEEE 802.15.4
+  label_for_results: ZigBee-like
+  implementation_status: profile_ready
+  profile_purpose: fixed_robust_baseline
+  terminology_note: >-
+    The pilot models IEEE 802.15.4 PHY/MAC, not the complete ZigBee network
+    and application stack.
+
+ns3:
+  version: 3.46.1
+  module: lr-wpan
+  helper: ns3::lrwpan::LrWpanHelper
+  phy_class: ns3::lrwpan::LrWpanPhy
+  channel_class: ns3::MultiModelSpectrumChannel
+  error_rate_model: ns3::lrwpan::LrWpanErrorModel
+
+comparison:
+  traffic_profile_ref: configs/traffic/telecommand_safety.yaml
+  conducted_tx_power_dbm: 14.0
+  tx_antenna_gain_dbi: 0.0
+  rx_antenna_gain_dbi: 0.0
+  nominal_eirp_dbm: 14.0
+  power_mode: common_controlled_eirp
+
+phy:
+  option: IEEE_802_15_4_2_4GHZ_OQPSK
+  channel_page: 0
+  channel_number: 11
+  center_frequency_mhz: 2405.0
+  modulation: O-QPSK_DSSS
+  nominal_data_rate_bps: 250000
+  nominal_symbol_rate_sps: 62500
+  reference_rx_sensitivity_dbm: -85.0
+  maximum_phy_frame_bytes: 127
+
+mac:
+  topology: direct_short_address_pair
+  pan_coordinator_required: false
+  channel_access: unslotted_csma_ca
+  mac_ack_requested: true
+  mac_max_frame_retries: 3
+  native_ack_and_retry_policy: enabled_and_recorded
+  application_mapping: direct_mcps_data
+  sixlowpan_enabled: false
+  zigbee_stack_enabled: false
+
+preflight:
+  maximum_application_payload_bps: 2290.666667
+  raw_rate_utilization_lower_bound: 0.009162667
+  raw_capacity_check: pass
+  caveat: Raw-rate feasibility does not prove deadline or reliability compliance.
+
+regulatory_context:
+  country: PE
+  unlicensed_band_mhz:
+    - 2400.0
+    - 2483.5
+  cited_max_eirp_dbm: 36.0
+  simulated_eirp_dbm: 14.0
+  hardware_deployment_requires_homologation_review: true
+
+sources:
+  - id: ns3_release_3_46
+    url: https://www.nsnam.org/releases/ns-3-46/
+  - id: ns3_lr_wpan_model
+    url: https://www.nsnam.org/docs/release/3.46/models/html/lr-wpan.html
+  - id: ns3_lr_wpan_api
+    url: https://www.nsnam.org/docs/release/3.46/doxygen/d3/de4/group__lr-wpan.html
+  - id: ieee_802_15_4
+    url: https://standards.ieee.org/ieee/802.15.4/7029/
+  - id: mtc_rm_373_2021
+    url: https://cdn.www.gob.pe/uploads/document/file/1861732/Resoluci%C3%B3n%20Ministerial%20nro%20373-2021-MTC/01.pdf
